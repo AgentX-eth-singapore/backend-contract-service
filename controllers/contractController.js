@@ -13,6 +13,9 @@ exports.storeContract = async (req, res) => {
     abi,
   } = req.body;
 
+  console.log(req.body, "req.body", functionName);
+  console.log(JSON.parse(req.body.abi), "req.body.abi");
+
   try {
     const newContract = new Contract({
       chainId,
@@ -21,16 +24,31 @@ exports.storeContract = async (req, res) => {
       ccipEnabled,
       functionName,
       smartAccountEnabled,
-      abi,
+      abi : JSON.parse(req.body.abi),
     });
 
-    await newContract.save();
-    res
-      .status(201)
-      .json({ message: "Contract stored successfully", id: newContract._id });
+    console.log(newContract, "newContract");
+
+    newContract.save((error, savedContract) => {
+      if (error) {
+        console.error("Error during contract saving:", error.message || error);
+        res.status(500).json({ error: "Error storing contract" });
+      } else if (savedContract) {
+        res
+          .status(201)
+          .json({
+            message: "Contract stored successfully",
+            id: 'AGX' + savedContract._id,
+          });
+      } else {
+        res
+          .status(500)
+          .json({ error: "Failed to save contract, no response returned." });
+      }
+    });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ error: "Error storing contract" });
+    console.error("Unexpected error:", error.message || error);
+    res.status(500).json({ error: "Unexpected error occurred" });
   }
 };
 
